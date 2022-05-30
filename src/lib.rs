@@ -56,6 +56,6 @@ mod cmd_pipe;
 mod cmd_spawn;
 mod cmd_to_file;
 
-pub use cmd_pipe::{CmdPipe, command_to_pipe};
+pub use cmd_pipe::{CmdPipe, command_pipe};
 pub use cmd_spawn::{ChildError, CmdSpawnError, command_spawn, CmdRun};
 pub use cmd_to_file::{CmdToFile, command_to_file};

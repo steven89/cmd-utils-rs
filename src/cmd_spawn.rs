@@ -31,19 +31,25 @@ pub enum CmdSpawnError {
     /// command spawn std::io error [std::io::Error](https://doc.rust-lang.org/std/io/struct.Error.html)
     IO(io::Error),
     /// Child process exited with error
-    ChildError(ChildError)
+    Child(ChildError)
 }
 
 impl fmt::Display for CmdSpawnError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             CmdSpawnError::IO(e) => write!(f, "command IO error {}", e),
-            CmdSpawnError::ChildError(e) => write!(f, "child {}", e),
+            CmdSpawnError::Child(e) => write!(f, "child {}", e),
         }
     }
 }
 
 /// `spawn` and `wait` command
+///
+/// # Errors
+///
+/// command_spawn can result in `CmdSpawnError`:
+/// - `CmdSpawnError::IO(std::io::Error)` when `spawn` or `wait` fail
+/// - `CmdSpawnError::Child(ChildError)` when the child process exit with a failed status
 pub fn command_spawn (command: &mut Command) -> Result<(), CmdSpawnError> {
     let process = command.spawn();
     match process {
@@ -52,7 +58,7 @@ pub fn command_spawn (command: &mut Command) -> Result<(), CmdSpawnError> {
                 Ok(status) => {
                     if !status.success() {
                         return Err(
-                            CmdSpawnError::ChildError(
+                            CmdSpawnError::Child(
                                 ChildError {
                                     program: command.get_program()
                                         .to_str()
@@ -74,6 +80,12 @@ pub fn command_spawn (command: &mut Command) -> Result<(), CmdSpawnError> {
 
 pub trait CmdRun {
     /// `spawn` and `wait` child process
+    ///
+    /// # Errors
+    ///
+    /// command.run() can result in `CmdSpawnError`:
+    /// - `CmdSpawnError::IO(std::io::Error)` when `spawn` or `wait` fail
+    /// - `CmdSpawnError::Child(ChildError)` when the child process exit with a failed status
     fn run(&mut self) -> Result<(), CmdSpawnError>;
 }
 
@@ -112,7 +124,7 @@ mod tests {
             Err(e) => {
                 match e {
                     crate::CmdSpawnError::IO(e) => panic!("{}", e),
-                    crate::CmdSpawnError::ChildError(e) => {
+                    crate::CmdSpawnError::Child(e) => {
                         assert_eq!(e.program, program.to_owned());
                         assert_eq!(e.code, Some(1 as i32));
                     },

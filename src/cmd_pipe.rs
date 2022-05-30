@@ -3,8 +3,14 @@ use io::{BufWriter, Write, BufReader, BufRead};
 use std::process::{Command, Stdio, Output};
 
 /// Pipe **stdout** of `command` to **stdin** of `piped` command
+///
+/// # Errors
+///
+/// command_pipe can result in `std::io::Error`
+/// - when `spawn` or `wait` fail
+/// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
 #[allow(clippy::manual_flatten)]
-pub fn command_to_pipe (command: &mut Command, piped: &mut Command) -> Result<Output, io::Error> {
+pub fn command_pipe (command: &mut Command, piped: &mut Command) -> Result<Output, io::Error> {
     let process = command.stdout(Stdio::piped()).spawn();
     match process {
         Ok(child) => {
@@ -53,12 +59,18 @@ pub fn command_to_pipe (command: &mut Command, piped: &mut Command) -> Result<Ou
 
 pub trait CmdPipe {
     /// Pipe **stdout** of `self` to **stdin** of `piped_command`
+    ///
+    /// # Errors
+    ///
+    /// command.pipe(cmd) can result in `std::io::Error`
+    /// - when `spawn` or `wait` fail
+    /// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
     fn pipe (&mut self, piped_command: &mut Command) -> Result<Output, io::Error>;
 }
 
 impl CmdPipe for Command {
     fn pipe(&mut self, piped_command: &mut Command) -> Result<Output, io::Error> {
-        command_to_pipe(self, piped_command)
+        command_pipe(self, piped_command)
     }
 }
 
@@ -74,13 +86,13 @@ mod test {
 
     use super::CmdPipe;
 
-    use super::command_to_pipe;
+    use super::command_pipe;
 
     #[test]
     fn test_command_to_pipe () {
         let mut echo = Command::new("echo");
         let mut wc = Command::new("wc");
-        let output = command_to_pipe(
+        let output = command_pipe(
             &mut echo.args(["-n", "test"]),
             &mut wc.arg("-c")
         ).unwrap();

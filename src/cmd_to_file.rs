@@ -4,6 +4,12 @@ use std::fs::File;
 use crate::{CmdRun, CmdSpawnError};
 
 /// `spawn`, `wait` and send the stdout of the command to a file
+///
+/// # Errors
+///
+/// command_to_file can result in `CmdSpawnError`:
+/// - `CmdSpawnError::IO(std::io::Error)` when `spawn` or `wait` fail
+/// - `CmdSpawnError::Child(ChildError)` when the child process exit with a failed status
 pub fn command_to_file (
     command: &mut Command,
     file: File,
@@ -18,6 +24,12 @@ pub fn command_to_file (
 pub trait CmdToFile {
     /// `spawn`, `wait` and **stdout** to `file` for the child process,
     /// optional **stderr** to `stderr_file`
+    ///
+    /// # Errors
+    ///
+    /// command.to_file(file, err_file) can result in `CmdSpawnError`:
+    /// - `CmdSpawnError::IO(std::io::Error)` when `spawn` or `wait` fail
+    /// - `CmdSpawnError::Child(ChildError)` when the child process exit with a failed status
     fn to_file(&mut self, file: File, stderr_file: Option<File>) -> Result<(), CmdSpawnError>;
 }
 
