@@ -1,3 +1,4 @@
+//! # cmd-utils crate
 //! rust `Command` utility traits
 //! - run command (`spawn` & `wait` wrapper)
 //! - pipe commands
