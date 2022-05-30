@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["steven89"]
 license = "MIT"
+license-file = "LICENSE"
 include = [
   "src/**/*",
   "examples/",
@@ -11,9 +12,9 @@ include = [
   "README.md",
   "LICENSE"
 ]
-homepage = "https:://github.com/steven89/cmd-utils-rs"
-repository = "https:://github.com/steven89/cmd-utils-rs"
-description = "rust Command utility traits"
+homepage = "https://github.com/steven89/cmd-utils-rs"
+repository = "https://github.com/steven89/cmd-utils-rs"
+description = "rust Command utility traits, pipe commands"
 keywords = [
   "command",
   "command-pipe",
