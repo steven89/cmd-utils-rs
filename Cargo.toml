@@ -1,0 +1,29 @@
+[package]
+name = "cmd-utils"
+version = "0.1.0"
+edition = "2021"
+authors = ["steven89"]
+license = "MIT"
+include = [
+  "src/**/*",
+  "examples/",
+  "Cargo.toml",
+  "README.md",
+  "LICENSE"
+]
+homepage = "https:://github.com/steven89/cmd-utils-rs"
+repository = "https:://github.com/steven89/cmd-utils-rs"
+description = "rust Command utility traits"
+keywords = [
+  "command",
+  "command-pipe",
+  "command-utility",
+  "cmd-utils",
+  "command-utils"
+]
+categories = ["command-line-interface"]
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
