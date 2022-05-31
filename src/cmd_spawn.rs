@@ -15,7 +15,7 @@ impl fmt::Display for ChildError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "program \"{}\" failed with status code {}",
+            "program `{}` failed with status code {}",
             self.program,
             match self.code {
                 Some(code) => code.to_string(),
@@ -39,6 +39,17 @@ impl fmt::Display for CmdSpawnError {
         match &*self {
             CmdSpawnError::IO(e) => write!(f, "command IO error {}", e),
             CmdSpawnError::Child(e) => write!(f, "child {}", e),
+        }
+    }
+}
+
+impl From<CmdSpawnError> for io::Error {
+    fn from(val: CmdSpawnError) -> Self {
+        match val {
+            CmdSpawnError::IO(e) => e,
+            CmdSpawnError::Child(e) => {
+                io::Error::new(io::ErrorKind::Other, format!("{}", e))
+            },
         }
     }
 }
