@@ -1,5 +1,5 @@
 ![Crates.io](https://img.shields.io/crates/v/cmd-utils?style=for-the-badge)
-![Docs.rs](https://img.shields.io/docsrs/cmd-utils/0.2.0?style=for-the-badge)
+![Docs.rs](https://img.shields.io/docsrs/cmd-utils/latest?style=for-the-badge)
 
 # Cmd Utils
 
