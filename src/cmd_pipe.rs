@@ -1,8 +1,9 @@
-use std::io;
+use std::{io, fs::File};
 use io::{BufWriter, Write, BufReader, BufRead};
 use std::process::{Command, Stdio, Output};
 
-/// Pipe **stdout** of `command` to **stdin** of `piped` command
+/// Pipe **stdout** of `command` to **stdin** of `piped` command,
+/// and pipe **stdout** of `piped` to `piped_stdout`
 ///
 /// # Errors
 ///
@@ -10,14 +11,16 @@ use std::process::{Command, Stdio, Output};
 /// - when `spawn` or `wait` fail
 /// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
 #[allow(clippy::manual_flatten)]
-pub fn command_pipe (command: &mut Command, piped: &mut Command) -> Result<Output, io::Error> {
+pub fn command_pipe_base<T> (
+    command: &mut Command, piped: &mut Command, piped_stdout: T
+) -> Result<Output, io::Error> where T: Into<Stdio>{
     let process = command.stdout(Stdio::piped()).spawn();
     match process {
         Ok(child) => {
             if let Some(stdout) = child.stdout {
                 let piped_process = piped
                     .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
+                    .stdout(piped_stdout)
                     .spawn();
                 match piped_process {
                     Ok(mut piped_child) => {
@@ -57,6 +60,36 @@ pub fn command_pipe (command: &mut Command, piped: &mut Command) -> Result<Outpu
     }
 }
 
+/// Pipe **stdout** of `command` to **stdin** of `piped` command
+///
+/// # Errors
+///
+/// command_pipe can result in `std::io::Error`
+/// - when `spawn` or `wait` fail
+/// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
+pub fn command_pipe (
+    command: &mut Command, piped: &mut Command
+) -> Result<Output, io::Error> {
+    return command_pipe_base(command, piped, Stdio::piped());
+}
+
+/// Pipe **stdout** of `command` to **stdin** of `piped` command
+/// and pipe **stdout** of `piped` to `file`
+///
+/// # Errors
+///
+/// command_pipe_to_file can result in `std::io::Error`
+/// - when `spawn` or `wait` fail
+/// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
+pub fn command_pipe_to_file (
+    command: &mut Command, piped: &mut Command, file: File
+) -> Result<(), io::Error> {
+    return match command_pipe_base(command, piped, file) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    };
+}
+
 pub trait CmdPipe {
     /// Pipe **stdout** of `self` to **stdin** of `piped_command`
     ///
@@ -66,11 +99,24 @@ pub trait CmdPipe {
     /// - when `spawn` or `wait` fail
     /// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
     fn pipe (&mut self, piped_command: &mut Command) -> Result<Output, io::Error>;
+
+    /// Pipe **stdout** of `self` to **stdin** of `piped_command`,
+    /// and pipe **stdout** of `piped_command` to `file`
+    /// # Errors
+    ///
+    /// command.pipe_to_file(cmd, file) can result in `std::io::Error`
+    /// - when `spawn` or `wait` fail
+    /// - when there is an issue with the **stdout** / **stdin** pipe (std::io::ErrorKind::BrokenPipe)
+    fn pipe_to_file (&mut self, piped_command: &mut Command, file: File) -> Result<(), io::Error>;
 }
 
 impl CmdPipe for Command {
     fn pipe(&mut self, piped_command: &mut Command) -> Result<Output, io::Error> {
         command_pipe(self, piped_command)
+    }
+
+    fn pipe_to_file (&mut self, piped_command: &mut Command, file: File) -> Result<(), io::Error> {
+        command_pipe_to_file(self, piped_command, file)
     }
 }
 
@@ -81,8 +127,10 @@ impl CmdPipe for Command {
 
 #[cfg(test)]
 mod test {
+    use std::fs;
+    use std::io::Read;
     use std::process::Command;
-    use std::str::{from_utf8};
+    use std::str::from_utf8;
 
     use super::CmdPipe;
 
@@ -117,5 +165,35 @@ mod test {
         };
         // MacOs puts whitespace in from of wc result
         assert_eq!(str::trim_start(res), "5\n");
+    }
+
+    #[test]
+    fn test_command_pipe_to_file () {
+        const FILE_NAME: &str = "tmp/__command_pipe_to_file";
+        let mut echo = Command::new("echo");
+        let mut wc = Command::new("wc");
+        if let Err(e) = fs::create_dir("tmp") {
+            match e.kind() {
+                std::io::ErrorKind::AlreadyExists => (),
+                _ => panic!("{}", e),
+            }
+        }
+        let file = fs::File::create(FILE_NAME).unwrap();
+        echo.args(["-n", "test"])
+            .pipe_to_file(&mut wc.arg("-c"), file)
+            .unwrap();
+
+        // read result
+        let mut read_file = fs::File::open(FILE_NAME).unwrap();
+        let mut res = String::new();
+        match read_file.read_to_string(&mut res) {
+            Err(e) => panic!("{}", e),
+            _ => (),
+        };
+
+        assert_eq!(str::trim_start(&res), "5\n");
+
+        // cleanup file
+        fs::remove_file(FILE_NAME).unwrap();
     }
 }

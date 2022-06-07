@@ -1,5 +1,5 @@
 //! # cmd-utils crate
-//! rust `Command` utility traits
+//! Safe Rust `Command` utility traits
 //! - run command (`spawn` & `wait` wrapper)
 //! - pipe commands
 //! - output to file (`spawn` & `wait` & outuput to file wrapper)
@@ -43,8 +43,8 @@
 //! use std::process::Command;
 //! use cmd_utils::CmdToFile;
 //!
-//! let stdout = File::create("my_file.stdout").unwrap();
-//! let stderr = File::create("my_file.stderr").unwrap();
+//! let stdout = File::create("tmp/my_file.stdout").unwrap();
+//! let stderr = File::create("tmp/my_file.stderr").unwrap();
 //! let mut cmd = Command::new("echo");
 //! // writes stdout to file
 //! cmd.arg("test").to_file(stdout, Some(stderr));
@@ -58,6 +58,6 @@ mod cmd_pipe;
 mod cmd_spawn;
 mod cmd_to_file;
 
-pub use cmd_pipe::{CmdPipe, command_pipe};
+pub use cmd_pipe::{CmdPipe, command_pipe, command_pipe_to_file, command_pipe_base};
 pub use cmd_spawn::{ChildError, CmdSpawnError, command_spawn, CmdRun};
 pub use cmd_to_file::{CmdToFile, command_to_file};

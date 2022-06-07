@@ -1,6 +1,9 @@
+![Crates.io](https://img.shields.io/crates/v/cmd-utils?style=for-the-badge)
+![Docs.rs](https://img.shields.io/docsrs/cmd-utils/0.2.0?style=for-the-badge)
+
 # Cmd Utils
 
-rust `Command` utility traits
+Safe Rust `Command` utility traits
 - run command (spawn & wait wrapper)
 - pipe commands
 - output to file (spawn & wait & outuput to file wrapper)
